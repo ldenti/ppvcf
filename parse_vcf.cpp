@@ -113,6 +113,7 @@ int parse_vcf_htslib_mixed(char* vcf_path, const int &n_threads) {
   while (bcf_read(vcf, vcf_header, vcf_record) == 0) {
     bcf_unpack(vcf_record, BCF_UN_INFO); // here we unpack till INFO field
 
+    // Maybe here we can just copy vcf->line.s and make a vector of char*?
     kstring_t *ks = new kstring_t();
     ks_initialize(ks);
     kputsn(vcf->line.s, vcf->line.l, ks);
@@ -120,6 +121,8 @@ int parse_vcf_htslib_mixed(char* vcf_path, const int &n_threads) {
 
     if(vcf_lines.size() == 20000) {
       analyze(vcf_lines, n_samples, n_threads);
+      for(kstring_t* ks : vcf_lines)
+	ks_free(ks);
       vcf_lines.clear();
     }
   }
@@ -155,7 +158,11 @@ int parse_vcf_htslib_ALL(char* vcf_path, const int &n_threads) {
 int main(int argc, char *argv[]) {
   char* vcf_path = argv[1];
   int n_threads = atoi(argv[2]);
-  parse_vcf_htslib_mixed(vcf_path, n_threads);
-  cerr << "END" << endl;
+  int mode = atoi(argv[3]);
+  if(mode == 0)
+    parse_vcf_htslib_mixed(vcf_path, n_threads);
+  else
+    parse_vcf_htslib_ALL(vcf_path, n_threads);
+  // cerr << "END" << endl;
   return 0;
 }
