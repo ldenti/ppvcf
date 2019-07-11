@@ -11,37 +11,89 @@
 
 using namespace std;
 
-void parse_format_field(kstring_t *vcf_line, const bcf_hdr_t *vcf_header, bcf1_t *vcf_record) {
+struct GenoType {
+  int a1, a2;
+  bool phased;
+
+  GenoType() {
+    a1 = 0;
+    a2 = 0;
+    phased = true;
+  }
+
+  GenoType(int a1_, int a2_, bool phased_) {
+    a1 = a1_;
+    a2 = a2_;
+    phased = phased_ || a1 == a2;
+    cout << a1 << "-" << a2 << "-" << phased << endl;
+  }
+};
+
+char* get_samples(char *vcf_line) {
   int offset = 0;
+  char* fmt_suffix;
+  int fmt_size = 0;
   bool fmt_flag = false;
-  int nfield = 0;
   while(!fmt_flag) {
-    ++nfield;
-    // cout << vcf_line.s + offset << " ";
-    offset += strlen(vcf_line->s + offset) + 1;
-    // Here I'm assuming FORMAT field to start with GT
-    if(strncmp(vcf_line->s + offset, "GT\t", 3) == 0 || strncmp(vcf_line->s + offset, "GT:", 3) == 0) {
+    offset += strlen(vcf_line + offset) + 1;
+    /**
+     * From VCF format specification: "The first sub-field must always
+     * be the genotype (GT) if it is present. There are no required
+     * sub-fields."
+     **/
+    if(strncmp(vcf_line + offset, "GT\t", 3) == 0 || strncmp(vcf_line + offset, "GT:", 3) == 0) {
       fmt_flag = true;
-      char* fmt_suffix = vcf_line->s + offset;
+      fmt_suffix = vcf_line + offset;
       char* fmt_end = strchr(fmt_suffix, '\t');
-      // cerr << "!!! " << fmt_suffix << endl;
       if(fmt_end==NULL) {
-	cerr << "!!! " << vcf_line->s + offset << endl;
-	cerr << "Error - Invalid GT" << endl;
+	cerr << "Error - No samples" << endl;
 	exit(1);
       }
-      int fmt_size = fmt_end - fmt_suffix;
-      char *q = fmt_suffix + fmt_size; //end of FORMAT field
-      *q = 0;
-      vcf_parse_format(vcf_line, vcf_header, vcf_record, fmt_suffix, q);
+      fmt_size = fmt_end - fmt_suffix;
     }
   }
+  return vcf_line + offset + fmt_size + 1;
+}
+
+GenoType extract_genotype(char* gt) {
+  cout << gt << endl;
+  if(!strcmp(gt, ".")) {
+    return GenoType();
+  }
+  bool phased = strchr(gt, '/') != NULL;
+  int all1, all2;
+  char *all = strtok (gt,"/|");
+  all1 = atoi(all);
+  all = strtok(NULL,"/|");
+  all2 = all==NULL ? all1 : atoi(all);
+  cout << "@ " << all1 << "-" << all2 << "-" << phased << endl;
+  return GenoType(all1, all2, phased);
+}
+
+void parse_format_field(char *vcf_line) {
+  char *samples = get_samples(vcf_line);
+  
+  for(;;) {
+    char *next_tab = strchr(samples, '\t');
+    char *gt = strtok(samples,":\t");
+    GenoType g = extract_genotype(gt);
+    if(next_tab == NULL) break;
+    samples = next_tab+1;
+  }
+  // while (sample != NULL) {
+  //   cout << strlen(sample) << " " << sample << endl;
+    
+  //   // char *gt = strtok(sample,":");
+  //   // cout << gt << endl;
+
+  //   sample = strtok(NULL,"\t");
+  // }
 }
 
 void analyze(vector<kstring_t*> &vcf_lines, vector<bcf1_t> &vcf_records, bcf_hdr_t *vcf_header, const int &n_threads) {
 #pragma omp parallel for num_threads (n_threads) shared (vcf_header, vcf_lines, vcf_records)
   for(int i=0; i<(int)vcf_lines.size(); ++i) {
-    parse_format_field(vcf_lines[i], vcf_header, &vcf_records[i]);
+    parse_format_field(vcf_lines[i]->s);
     // Variant v(vcf_header, &vcf_records[i], "AF");
     // cerr << v.idx << " " << v.ref_pos << endl;
   }
