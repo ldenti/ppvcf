@@ -23,6 +23,15 @@ private:
   int n_threads;
   
 public:
+  Variant front() { return variants.front(); }
+  Variant back() { return variants.back(); }
+  vector<Variant>::iterator begin() { return variants.begin(); }
+  vector<Variant>::iterator end() { return variants.end(); }
+  vector<Variant>::const_iterator begin() const { return variants.begin(); }
+  vector<Variant>::const_iterator end() const { return variants.end(); }
+  vector<Variant>::const_iterator cbegin() const { return variants.cbegin(); }
+  vector<Variant>::const_iterator cend() const { return variants.cend(); }
+  
   VCF(char* vcf_path, const int &nths) {
     vcf = bcf_open(vcf_path, "r");
     vcf_header = bcf_hdr_read(vcf);
@@ -45,6 +54,7 @@ public:
    * n lines (due to EOF).
    **/
   bool parse(const uint32_t n) {
+    variants.clear();
     uint32_t i = 0;
     while (i<n && bcf_read(vcf, vcf_header, vcf_record) == 0) {
       // 1. we unpack till INFO field
@@ -52,9 +62,10 @@ public:
       variants.push_back(Variant(n_samples));
       variants.back().update_till_info(vcf_header, vcf_record);
       
-      // 2. we store the rest of the line (ie FORMAT fields)
-      char* fmt_line = new char[vcf->line.l];
-      memcpy(fmt_line, vcf->line.s, vcf->line.l);
+      // 2. we store the line
+      // FIXME: we should store only the FORMAT fields
+      char* fmt_line = new char[vcf->line.l+1];
+      memcpy(fmt_line, vcf->line.s, vcf->line.l+1);
       fmt_lines.push_back(fmt_line);
 
       ++i;
@@ -119,19 +130,16 @@ private:
   void fill_variant(const uint32_t i) {
     char *samples = get_samples(fmt_lines[i]);
 
-    int j = 0;
+    char *gt_ptr;
+    char *gtc = strtok_r(samples, "\t", &gt_ptr);
     for(;;) {
-      char *next_tab = strchr(samples, '\t');
-      char *gt_ptr;
-      char *gtc = strtok_r(samples,":\t", &gt_ptr);
+      if(gtc == NULL) break;
       GT gt = extract_genotype(gtc);
-      // variants[i].add_genotype(gt);
-      if(next_tab == NULL) break;
-      samples = next_tab+1;
-      ++j;
+      variants[i].add_genotype(gt);
+      gtc = strtok_r(NULL, "\t", &gt_ptr);
     }
   }
-  
+
   void fill_genotypes() {
 #pragma omp parallel for num_threads (n_threads) shared (fmt_lines, variants)
     for(int i=0; i<(int)fmt_lines.size(); ++i) {

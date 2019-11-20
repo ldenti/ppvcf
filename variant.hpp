@@ -11,13 +11,14 @@ struct GT {
   uint8_t a1, a2;
   bool phased;
 
-  GT(uint8_t a1_ = 0, uint8_t a2_ = 0, bool phased_ = true) {
+  GT(uint8_t a1_ = -1, uint8_t a2_ = -1, bool phased_ = true) {
     a1 = a1_;
     a2 = a2_;
     phased = phased_ || a1 == a2;
   }
+  ~GT() { }
 
-  string to_str() {
+  string to_str() const {
     return phased ? to_string(a1)+"|"+to_string(a2) : to_string(a1)+"/"+to_string(a2);
   }
 };
@@ -25,20 +26,25 @@ struct GT {
 class Variant {
 private:
   string seq_name;
-  int ref_pos;                                // Variant position 0-based
-  string idx;                            // ID
-  string ref_sub;                        // Reference base{s}
-  vector<string> alts;              // List of alternatives
-  float quality;                              // Quality field
-  string filter;                         // Filter field
-  string info;                           // Info field
-  
-  vector<GT> genotypes; // full list of genotypes
+  int ref_pos;
+  string idx;
+  string ref_sub;
+  vector<string> alts;
+  float quality;
+  string filter;
+  string info;
+
+  uint32_t nsamples;
+  uint32_t gti;
 
 public:
-  Variant(const uint32_t nsamples) : genotypes(nsamples) { }
-  ~Variant() {
-  }
+  vector<GT> genotypes; // full list of genotypes
+  
+  Variant(const uint32_t _nsamples) :
+    nsamples(_nsamples),
+    gti(0),
+    genotypes(nsamples) {  }
+  ~Variant() {  }
 
   void update_till_info(bcf_hdr_t *header, bcf1_t *record) {
     seq_name = bcf_hdr_id2name(header, record->rid);
@@ -53,8 +59,13 @@ public:
     }
 
     quality = record->qual;
-    filter = "PASS"; // TODO: get filter string from VCF
-    info = ".";      // TODO: get info string from VCF
+    filter = "PASS"; // TODO: get filter string
+    info = ".";      // TODO: get info string
+  }
+
+  void add_genotype(const GT& gt) {
+    assert(gti < nsamples);
+    genotypes[gti++] = gt;
   }
 
   /**
