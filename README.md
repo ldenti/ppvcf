@@ -1,7 +1,7 @@
 # ppvcf
 
 ```
-git clone --recursive https://github.com/ldenti/parse_vcf.git
+git clone --recursive https://github.com/ldenti/ppvcf.git
 cd htslib
 make
 cd ..
