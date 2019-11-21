@@ -1,4 +1,4 @@
-# parse_vcf
+# ppvcf
 
 ```
 git clone --recursive https://github.com/ldenti/parse_vcf.git
