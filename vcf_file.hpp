@@ -73,6 +73,10 @@ public:
 
     fill_genotypes();
 
+    for(uint i=0; i<fmt_lines.size(); ++i)
+      free(fmt_lines[i]);
+    fmt_lines.clear();
+
     return i==n;
   }
 
@@ -110,43 +114,51 @@ private:
   /**
    * Transform a char* representing a genotype to the struct GT.
    **/
-  GT extract_genotype(char* gt) {
-    if(!strcmp(gt, ".") or !strcmp(gt, "./.") or !strcmp(gt, ".|."))
+  GT extract_genotype(char* start) {
+    if(!strcmp(start, "."))
       return GT();
 
-    bool phased = strchr(gt, '|') != NULL;
     int all1, all2;
-    char *gt_ptr;
-    char *all = strtok_r(gt,"/|", &gt_ptr);
-    all1 = atoi(all);
-    all = strtok_r(NULL,"/|", &gt_ptr);
-    all2 = all==NULL ? all1 : atoi(all);
+    char* start2 = start;;
+
+    for(; *start2 != '|' && *start2 != '/'; ++start2) ;
+    bool phased = *start2 == '|';
+    *start2 = '\0';
+    ++start2;
+
+    all1 = atoi(start);
+    all2 = atoi(start2);
 
     // assert(all1 <= alts.size() && all2 <= alts.size());
 
     return GT(all1, all2, phased);
   }
 
-  void fill_variant(const uint32_t i) {
-    char *samples = get_samples(fmt_lines[i]);
+  void fill_variant(const uint32_t var_idx) {
+    char *samples = get_samples(fmt_lines[var_idx]);
 
-    char *gt_ptr;
-    char *gtc = strtok_r(samples, "\t", &gt_ptr);
-    for(;;) {
-      if(gtc == NULL) break;
-      GT gt = extract_genotype(gtc);
-      variants[i].add_genotype(gt);
-      gtc = strtok_r(NULL, "\t", &gt_ptr);
+    int fmt_field_idx = 0; // if we find a :, then we increment this
+    char* start = samples;
+    int n = strlen(samples);
+    for(int i=0; i<=n; ++i) {
+      char c = *(samples+i);
+      if(c == '\t' || c == '\0') {
+	*(samples+i) = '\0';
+	GT gt = extract_genotype(start);
+	// cout << gt.to_str() << endl;
+	variants[var_idx].add_genotype(gt);
+	start = samples+i+1;
+      } else if(c == ':') {
+	++fmt_field_idx;
+	*(samples+i) = '\0';
+      } else {  }
     }
   }
 
   void fill_genotypes() {
 #pragma omp parallel for num_threads (n_threads) shared (fmt_lines, variants)
-    for(int i=0; i<(int)fmt_lines.size(); ++i) {
+    for(uint i=0; i<fmt_lines.size(); ++i)
       fill_variant(i);
-      free(fmt_lines[i]);
-    }
-    fmt_lines.clear();
   }
 };
 

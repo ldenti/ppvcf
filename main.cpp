@@ -16,7 +16,7 @@ int parse_vcf_htslib_ALL(char* vcf_path) {
   while (bcf_read(vcf, vcf_header, vcf_record) == 0) {
     bcf_unpack(vcf_record, BCF_UN_ALL);
     int32_t *gt_arr = NULL, ngt = 0;
-    int ngt_ret_value = bcf_get_genotypes(vcf_header, vcf_record, &gt_arr, &ngt);
+    bcf_get_genotypes(vcf_header, vcf_record, &gt_arr, &ngt);
 
     if ( ngt<=0 ) return 1; // GT not present
 
@@ -29,7 +29,6 @@ int parse_vcf_htslib_ALL(char* vcf_path) {
         all_1 = bcf_gt_allele(curr_gt[0]);
         all_2 = bcf_gt_allele(curr_gt[0]);
       } else {
-	cout << curr_gt[0] << " " << bcf_gt_allele(curr_gt[0]) << endl;
         all_1 = bcf_gt_allele(curr_gt[0]);
         all_2 = bcf_gt_allele(curr_gt[1]);
       }
@@ -54,12 +53,7 @@ int main(int argc, char *argv[]) {
 
   if(mode == 0) {
     VCF vcf (vcf_path, n_threads);
-    while(true) {
-      bool a = vcf.parse(100);
-      if(!a) {
-	break;
-      }
-    }
+    while(vcf.parse(100));
   } else
     parse_vcf_htslib_ALL(vcf_path);
   return 0;
