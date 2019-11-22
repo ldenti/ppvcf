@@ -104,12 +104,11 @@ private:
    * Transform a char* representing a genotype to the struct GT.
    **/
   GT extract_genotype(char *start) {
-    if (!strcmp(start, "."))
+    if (*start != '.')
       return GT();
 
     int all1, all2;
     char *start2 = start;
-    ;
 
     for (; *start2 != '|' && *start2 != '/'; ++start2)
       ;
@@ -131,17 +130,17 @@ private:
       ;
     ++samples;
 
-    int n = strlen(samples);
     char *start = samples;
     char *end = start;
-    for (int i = 0; i<n; ++i) {
+    bool last = false;
+    while (!last) {
       for (; *end != '\t' && *end != '\0'; ++end)
-	++i;
+	;
+      last = *end == '\0';
       *end = '\0';
       GT gt = extract_genotype(start);
-      cout << gt.to_str() << endl;
-      //variants[var_idx].add_genotype(gt);
-      start = end + 1; //++i done by for
+      variants[var_idx].add_genotype(gt);
+      start = end + 1;
       end = start;
     }
     // TODO: manage ":"
