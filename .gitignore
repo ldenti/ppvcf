@@ -1,4 +1,5 @@
 *~
 main
+\#main.cpp\#
 main.o
 *.vcf
