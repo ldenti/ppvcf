@@ -1,5 +1,6 @@
 *~
 main
 \#main.cpp\#
-main.o
 *.vcf
+*.debug
+*.o
