@@ -1,7 +1,7 @@
 CXX=g++
 CXXFLAGS=-DNDEBUG -Wall -O3 -std=c++11 -fopenmp
 CXXDEBUGFLAGS=-Wall -Wpedantic -O0 -g -std=c++11 -fopenmp
-CPPFLAGS=-I. -I./htslib/htslib
+CPPFLAGS=-I. -I./htslib
 LDFLAGS=-L./htslib
 LDLIBS=-lhts
 

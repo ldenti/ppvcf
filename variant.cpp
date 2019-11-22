@@ -14,6 +14,7 @@ string GT::to_str() const {
 }
 
 /*---------- Variant methods ----------*/
+
 Variant::Variant(const uint32_t _nsamples)
     : nsamples(_nsamples), gti(0), genotypes(nsamples) {}
 

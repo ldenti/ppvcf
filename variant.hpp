@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "vcf.h"
+#include "htslib/vcf.h"
 
 using namespace std;
 

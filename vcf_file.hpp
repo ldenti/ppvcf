@@ -4,7 +4,7 @@
 #include <omp.h>
 #include <vector>
 
-#include "vcf.h"
+#include "htslib/vcf.h"
 
 #include "variant.hpp"
 

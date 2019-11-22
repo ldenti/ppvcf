@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "vcf.h"
+#include "htslib/vcf.h"
 
 #include "vcf_file.hpp"
 
