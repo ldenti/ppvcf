@@ -1,9 +1,9 @@
 CXX=g++
-CXXFLAGS=-DNDEBUG -Wall -O3 -std=c++11 -fopenmp
-CXXDEBUGFLAGS=-Wall -Wpedantic -O0 -g -std=c++11 -fopenmp
+CXXFLAGS=-DNDEBUG -Wall -O3 -std=c++11 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free -fopenmp
+CXXDEBUGFLAGS=-Wall -Wpedantic -O0 -g -std=c++11 -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free -fno-stack-protector
 CPPFLAGS=-I. -I./htslib
 LDFLAGS=-L./htslib
-LDLIBS=-lhts
+LDLIBS=-lhts -ltcmalloc -lprofiler
 
 .PHONY: all
 

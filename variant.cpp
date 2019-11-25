@@ -16,9 +16,9 @@ string GT::to_str() const {
 /*---------- Variant methods ----------*/
 
 Variant::Variant(const uint32_t _nsamples)
-    : nsamples(_nsamples), gti(0), genotypes(nsamples) {}
+    : nsamples(_nsamples), gti(0), genotypes(_nsamples) {}
 
-Variant::~Variant() {}
+Variant::~Variant() { }
 
 string Variant::get_info(const string &key) const {
   return info_values[info_keys.at(key)];
@@ -106,7 +106,11 @@ void Variant::update_till_info(bcf_hdr_t *header, bcf1_t *record) {
   store_info(header, record);
 }
 
-void Variant::add_genotype(const GT &gt) {
+void Variant::add_genotype(const uint8_t a1, const uint8_t a2,
+                           const bool phased) {
   assert(gti < nsamples);
-  genotypes[gti++] = gt;
+  genotypes[gti].a1 = a1;
+  genotypes[gti].a2 = a2;
+  genotypes[gti].phased = phased;
+  ++gti;
 }

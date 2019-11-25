@@ -4,6 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <string>
+#include <tuple>
 #include <vector>
 #include <map>
 
@@ -42,13 +43,13 @@ private:
 
 public:
   vector<GT> genotypes; // full list of genotypes
-  
+
   Variant(const uint32_t _nsamples);
   ~Variant();
 
   void update_till_info(bcf_hdr_t *header, bcf1_t *record);
 
-  void add_genotype(const GT& gt);
+  void add_genotype(const uint8_t a1, const uint8_t a2, const bool phased);
 
   string get_info(const string &key) const;
 

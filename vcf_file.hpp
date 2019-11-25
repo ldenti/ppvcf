@@ -2,6 +2,7 @@
 #define _VCFFILE_HPP_
 
 #include <omp.h>
+#include <tuple>
 #include <vector>
 
 #include "htslib/vcf.h"
@@ -9,6 +10,11 @@
 #include "variant.hpp"
 
 using namespace std;
+
+typedef struct {
+  size_t size;
+  char *seq;
+} str_w_l;
 
 class VCF {
 private:
@@ -18,12 +24,14 @@ private:
 
   int n_samples;
   vector<Variant> variants;
-  vector<char *> fmt_lines;
+  vector<str_w_l> fmt_lines;
+  size_t block_size;
+  size_t to_parse;
 
   int n_threads;
 
 public:
-  VCF(char *vcf_path, const int &nths);
+  VCF(char *vcf_path, const int nths, const int block_size_);
   ~VCF();
 
   Variant front();
@@ -39,7 +47,7 @@ public:
    * Parse n lines from VCF. Returns 0 if it reads less than
    * n lines (due to EOF).
    **/
-  bool parse(const uint32_t n);
+  bool parse();
 
 private:
   /**
@@ -50,7 +58,7 @@ private:
   /**
    * Transform a char* representing a genotype to the struct GT.
    **/
-  GT extract_genotype(char *start);
+  tuple<uint8_t, uint8_t, bool> extract_genotype(char *start);
 
   void fill_variant(const uint32_t var_idx);
 
