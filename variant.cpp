@@ -54,14 +54,17 @@ void Variant::store_info(bcf_hdr_t *header, bcf1_t *record) {
       int *v = NULL;
       bcf_get_info_int32(header, record, key, &v, &ndst);
       value = to_string(*v);
+      free(v);
     } else if (type == BCF_BT_FLOAT) {
       float *v = NULL;
       bcf_get_info_float(header, record, key, &v, &ndst);
       value = to_string(*v);
+      free(v);
     } else if (type == BCF_BT_CHAR) {
       char *v = NULL;
       bcf_get_info_string(header, record, key, &v, &ndst);
       value = string(v);
+      free(v);
     } else {
       cerr << "Unknown type " << type << " (field " << key << ")" << endl;
       exit(1);
