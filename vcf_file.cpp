@@ -34,7 +34,7 @@ VCF::VCF(char *vcf_path, const int nths, const int block_size_) {
   for (size_t i = 0; i < block_size; ++i) {
     str_w_l s;
     s.size = 1024 * 10;
-    s.seq = (char *)malloc(s.size);
+    s.seq = (char *)calloc(s.size, sizeof(char));
 
     fmt_lines.push_back(s);
   }
