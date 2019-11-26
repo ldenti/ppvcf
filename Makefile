@@ -4,6 +4,7 @@ CXXDEBUGFLAGS=-Wall -Wpedantic -O0 -g -std=c++11 -fno-builtin-malloc -fno-builti
 CPPFLAGS=-I. -I./htslib
 LDFLAGS=-L./htslib
 LDLIBS=-lhts -ltcmalloc -lprofiler
+LDDEBUGLIBS=-lhts -ltcmalloc_debug -lprofiler
 
 .PHONY: all
 
@@ -21,7 +22,7 @@ debug: main.debug
 
 main.debug: main.o.debug variant.o.debug vcf_file.o.debug
 	@echo "* Linking $@"
-	$(CXX) $(CXXDEBUGFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+	$(CXX) $(CXXDEBUGFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS) $(LDDEBUGLIBS)
 
 %.o.debug: %.cpp
 	@echo '* Compiling $<'
