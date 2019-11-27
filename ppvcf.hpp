@@ -15,38 +15,83 @@
 using namespace std;
 
 /*---------- Auxiliary structs ----------*/
+//!  Auxiliary struct
+/*!
+  Auxiliary struct used to store a cstring and its size.
+*/
 typedef struct {
+  /// cstring size
   size_t size;
+  /// cstring
   char *seq;
 } str_w_l;
 
 /*---------- Genotype struct ----------*/
+//! Genotype struct
+/*!
+  Genotype information of a single sample associated to a variant.
+*/
 struct GT {
-  uint8_t a1, a2;
+  /// First allele
+  uint8_t a1;
+  /// Second allele
+  uint8_t a2;
+  /// Phased flag
   bool phased;
 
-  GT(uint8_t a1_ = -1, uint8_t a2_ = -1, bool phased_ = true) : a1(a1_), a2(a2_) {
-    phased = phased_ || a1 == a2;
+  /**
+   * Constructor
+   *
+   * @param _a1 is the first allele of the genotype
+   * @param _a2 is the second allele of the genotype
+   * @param _phased is true if the genotype is phased, false otherwise
+   **/
+  GT(uint8_t _a1 = 0, uint8_t _a2 = 0, bool _phased = true) : a1(_a1), a2(_a2) {
+    phased = _phased || a1 == a2;
   }
+  /**
+   * Destructor
+   **/
   ~GT() {}
 };
 
 /*---------- Variant class ----------*/
+//! Variant class
+/*!
+  Single line extracted from a VCF file.
+*/
 class Variant {
 private:
+  /// Chromosome
   string seq_name;
+  /// Position (0-based)
   int ref_pos;
+  /// Identifier
   string idx;
+  /// Reference base(s)
   string ref_sub;
+  /// Alternate base(s)
   vector<string> alts;
+  /// Phred-scaled quality score
   string quality;
+  /// Filter status
   string filter;
+  /// Additional information
   map<string, string> info;
 
+  /// Total number of samples
   uint32_t nsamples;
+  /// Genotype counter represeting how many GTs have been stored
   uint32_t gti;
-  vector<GT> genotypes; // full list of genotypes
+  /// Genotype fields
+  vector<GT> genotypes;
 
+  /**
+   * Extract the filter field from record and store it as a string.
+   *
+   * @param header is the htslib header
+   * @param record is a htslib record
+   **/
   void store_filter(bcf_hdr_t *header, bcf1_t *record) {
     // TODO: store filter differently (not as a single string) if we want to allow filtering
     filter = "";
@@ -60,6 +105,12 @@ private:
       filter = ".";
   }
 
+  /**
+   * Extract the additional information from record and store them as a map<string, string>.
+   *
+   * @param header is the htslib header
+   * @param record is a htslib record
+   **/
   void store_info(bcf_hdr_t *header, bcf1_t *record) {
     for (int i = 0; i < record->n_info; ++i) {
       bcf_info_t *info_field = &record->d.info[i];
@@ -95,30 +146,44 @@ private:
 
       info[key] = value;
 
-      /** // Maybe we can adapt this
-	  #define BRANCH(type_t, bcf_ht_t) {				\
-	  type_t *value = NULL;						\
-	  bcf_get_info_values(header, record, key, (void**)(&value), &ndst, bcf_ht_t); \
-	  cout << *value << endl;					\
-	  }
-	  switch(type) {
-	  case BCF_BT_INT8: BRANCH(int, BCF_HT_INT); break;
-	  case BCF_BT_INT16: BRANCH(int, BCF_HT_INT); break;
-	  case BCF_BT_INT32: BRANCH(int, BCF_HT_INT); break;
-	  case BCF_BT_FLOAT: BRANCH(float, BCF_HT_REAL); break;
-	  case BCF_BT_CHAR: BRANCH(string, BCF_HT_STR); break;
-	  default: cerr << "Unknown type " << type << endl; exit(1);
-	  }
-	  #undef BRANCH
-      **/
+      /* // Maybe we can adapt this
+	 #define BRANCH(type_t, bcf_ht_t) {				\
+	 type_t *value = NULL;						\
+	 bcf_get_info_values(header, record, key, (void**)(&value), &ndst, bcf_ht_t); \
+	 cout << *value << endl;					\
+	 }
+	 switch(type) {
+	 case BCF_BT_INT8: BRANCH(int, BCF_HT_INT); break;
+	 case BCF_BT_INT16: BRANCH(int, BCF_HT_INT); break;
+	 case BCF_BT_INT32: BRANCH(int, BCF_HT_INT); break;
+	 case BCF_BT_FLOAT: BRANCH(float, BCF_HT_REAL); break;
+	 case BCF_BT_CHAR: BRANCH(string, BCF_HT_STR); break;
+	 default: cerr << "Unknown type " << type << endl; exit(1);
+	 }
+	 #undef BRANCH
+      */
     }
   }
 
 public:
+  /**
+   * Constructor
+   *
+   * @param _nsamples is the number of samples
+   **/
   Variant(const uint32_t _nsamples)
     : nsamples(_nsamples), gti(0), genotypes(_nsamples) {}
+  /**
+   * Destructor
+   **/
   ~Variant() {}
 
+  /**
+   * Extract and store the first 8 fields of record.
+   *
+   * @param header is the htslib header
+   * @param record is a htslib record
+   **/
   void update_till_info(bcf_hdr_t *header, bcf1_t *record) {
     seq_name = bcf_hdr_id2name(header, record->rid);
     ref_pos = record->pos;
@@ -137,6 +202,13 @@ public:
     store_info(header, record);
   }
 
+  /**
+   * Store a single genotype information.
+   *
+   * @param a1 is the first allele
+   * @param a2 is the second allele
+   * @param phased is true if the genotype is phased, false otherwise
+   **/
   void add_genotype(const uint8_t a1, const uint8_t a2,
 		    const bool phased) {
     assert(gti < nsamples);
@@ -146,28 +218,54 @@ public:
     ++gti;
   }
 
-  string get_info(const string &key) const {
-    return info.at(key);
+  /**
+   * Extract the information value associated to a key.
+   *
+   * @param k is the key
+   * @return a string representing the value associated to key k
+   **/
+  string get_info(const string &k) const {
+    return info.at(k);
   }
 };
 
 /*---------- VCF class ----------*/
+//! VCF class
+/*!
+  VCF file.
+*/
 class VCF {
 private:
+  /// htslib file
   htsFile *vcf;
+  /// htslib header
   bcf_hdr_t *vcf_header;
+  /// htslib record
   bcf1_t *vcf_record;
 
+  /// Total number of samples per variant
   int n_samples;
+  /// Variants read
   vector<Variant> variants;
+  /// Genotype fields as cstring (from "GT" to the end of each line)
   vector<str_w_l> fmt_lines;
+  /// Number of variants to read at each iteration
   size_t block_size;
+  /// Number of variants read in the last iteration
   size_t to_parse;
 
+  /// Number of threads to use
   int n_threads;
 
 public:
-  VCF(char *vcf_path, const int nths, const int block_size_) {
+  /**
+   * Constructor
+   *
+   * @param vcf_path is the path to the input vcf file
+   * @param n_threads_ is the number of threads to use
+   * @param block_size_ is the number of variants to read at each iteration
+   **/
+  VCF(char *vcf_path, const int n_threads_, const int block_size_) {
     vcf = bcf_open(vcf_path, "r");
     vcf_header = bcf_hdr_read(vcf);
     vcf_record = bcf_init();
@@ -175,11 +273,12 @@ public:
 
     n_samples = bcf_hdr_nsamples(vcf_header);
 
-    n_threads = nths;
+    n_threads = n_threads_;
 
     block_size = block_size_;
     to_parse = 0;
 
+    // Allocate space for fmt_lines
     for (size_t i = 0; i < block_size; ++i) {
       str_w_l s;
       s.size = 1024 * 10;
@@ -188,6 +287,9 @@ public:
       fmt_lines.push_back(s);
     }
   }
+  /**
+   * Destructor
+   **/
   ~VCF() {
     for (size_t i = 0; i < block_size; ++i) {
       free(fmt_lines[i].seq);
@@ -198,8 +300,10 @@ public:
   }
 
   /**
-   * Parse n lines from VCF. Returns 0 if it reads less than
-   * n lines (due to EOF).
+   * Parse block_size lines from the input vcf file
+   *
+   * @return false if less than block_size lines have been read (due
+   * to EOF), true otherwise.
    **/
   bool parse() {
     variants.clear();
@@ -211,7 +315,7 @@ public:
       variants.push_back(Variant(n_samples));
       variants.back().update_till_info(vcf_header, vcf_record);
 
-      // 2. we store the line
+      // 2. we store the format line
       char *samples = get_samples(vcf->line.s, vcf->line.l + 1);
       size_t samples_s = vcf->line.l - (samples - vcf->line.s);
       while (samples_s > fmt_lines[i].size) {
@@ -222,27 +326,41 @@ public:
       ++i;
     }
     to_parse = i;
+
+    // 3. we parse and store the genotypes in parallel
     fill_genotypes();
 
     return i == n;
   }
 
+  /**
+   * @return the variants read in the last iteration
+   **/
   vector<Variant> get_variants() const {
     return variants;
   }
 
 private:
   /**
-   * This function cuts the FORMAT description field
+   * Extract the genotype information from a vcf line
+   *
+   * @param fmt_line is a line of the input vcf file
+   * @param len is the length of fmt_line
+   * @return a cstring representing the genotypes information
    **/
   char *get_samples(char *const fmt_line, const size_t len) {
-    /**
+    /*
+     * We need len since fmt_line contains \0 to separate the first 8
+     * fields (htslib replaces \t with \0)
+     */
+    char *gt_start = fmt_line;
+    char *const gt_end = fmt_line + len;
+
+    /*
      * From VCF format specification: "The first sub-field must always
      * be the genotype (GT) if it is present. There are no required
      * sub-fields."
-     **/
-    char *gt_start = fmt_line;
-    char *const gt_end = fmt_line + len;
+     */
     for (; gt_start != gt_end && (*gt_start != 'G' || *(gt_start + 1) != 'T' ||
 				  *(gt_start + 2) != '\t');
 	 ++gt_start)
@@ -251,7 +369,10 @@ private:
   }
 
   /**
-   * Transform a char* representing a genotype to the struct GT.
+   * Extracts information from a cstring representing a genotype
+   *
+   * @param start is a cstring
+   * @return a tuple containing the first allele, the second allele, and the phased flag
    **/
   tuple<uint8_t, uint8_t, bool> extract_genotype(char *start) {
     if (*start == '.')
@@ -273,7 +394,14 @@ private:
     return std::move(tuple<uint8_t, uint8_t, bool>(all1, all2, phased));
   }
 
+  /**
+   * Extracts and stores the genotype fields associated to the
+   * {var_idx}-th variant read in the last iteration
+   *
+   * @param var_idx is an index
+   **/
   void fill_variant(const uint32_t var_idx) {
+    assert(var_idx < to_parse);
     char *samples = fmt_lines[var_idx].seq;
 
     // Drop "GT" at the beginning of the line
@@ -299,6 +427,10 @@ private:
     // TODO: manage ":"
   }
 
+  /**
+   * Extracts and store the genotypes of all the variants read in the
+   * last iteration
+   **/
   void fill_genotypes() {
 #pragma omp parallel for num_threads(n_threads) shared(fmt_lines, variants)
     for (uint i = 0; i < to_parse; ++i) {
