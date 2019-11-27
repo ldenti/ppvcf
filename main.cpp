@@ -2,7 +2,7 @@
 
 #include "htslib/vcf.h"
 
-#include "vcf_file.hpp"
+#include "ppvcf.hpp"
 
 using namespace std;
 

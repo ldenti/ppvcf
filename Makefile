@@ -10,7 +10,7 @@ LDDEBUGLIBS=-lhts -ltcmalloc_debug -lprofiler
 
 all: main
 
-main: main.o variant.o vcf_file.o
+main: main.o
 	@echo "* Linking $@"
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
@@ -20,7 +20,7 @@ main: main.o variant.o vcf_file.o
 
 debug: main.debug
 
-main.debug: main.o.debug variant.o.debug vcf_file.o.debug
+main.debug: main.o.debug
 	@echo "* Linking $@"
 	$(CXX) $(CXXDEBUGFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS) $(LDDEBUGLIBS)
 
