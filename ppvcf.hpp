@@ -27,7 +27,7 @@ typedef struct {
 } str_w_l;
 
 /*---------- Genotype struct ----------*/
-//! Genotype struct
+//! Struct for a single genotype
 /*!
   Genotype information of a single sample associated to a variant.
 */
@@ -56,7 +56,7 @@ struct GT {
 };
 
 /*---------- Variant class ----------*/
-//! Variant class
+//! Class for a single variant
 /*!
   Single line extracted from a VCF file.
 */
@@ -65,11 +65,11 @@ private:
   /// Chromosome
   string seq_name;
   /// Position (0-based)
-  int ref_pos;
+  int pos;
   /// Identifier
   string idx;
   /// Reference base(s)
-  string ref_sub;
+  string ref;
   /// Alternate base(s)
   vector<string> alts;
   /// Phred-scaled quality score
@@ -186,9 +186,9 @@ public:
    **/
   void update_till_info(bcf_hdr_t *header, bcf1_t *record) {
     seq_name = bcf_hdr_id2name(header, record->rid);
-    ref_pos = record->pos;
+    pos = record->pos;
     idx = record->d.id;
-    ref_sub = record->d.allele[0];
+    ref = record->d.allele[0];
 
     for (int i = 1; i < record->n_allele; ++i) {
       char *curr_alt = record->d.allele[i];
@@ -219,10 +219,59 @@ public:
   }
 
   /**
+   * @return the chromosome of the variant
+   **/
+  string get_seqname() const {
+    return seq_name;
+  }
+
+  /**
+   * @return the (0-based) position of the variant
+   **/
+  int get_pos() const {
+    return pos-1;
+  }
+
+  /**
+   * @return the variant identifier
+   **/
+  string get_idx() const {
+    return idx;
+  }
+
+  /**
+   * @return the reference allele
+   **/
+  string get_ref() const {
+    return ref;
+  }
+
+  /**
+   * @return the alternate alleles
+   **/
+  vector<string> get_alts() const {
+    return alts;
+  }
+
+  /**
+   * @return the i-th (1-based) alternate allele
+   **/
+  string get_alt(const int i) const {
+    return alts[i-1];
+  }
+
+  /**
+   * @return the variant quality
+   **/
+  string get_quality() const {
+    return quality;
+  }
+
+  /**
    * Extract the information value associated to a key.
    *
    * @param k is the key
-   * @return a string representing the value associated to key k
+   * @return the value associated to key k
    **/
   string get_info(const string &k) const {
     return info.at(k);
@@ -230,7 +279,7 @@ public:
 };
 
 /*---------- VCF class ----------*/
-//! VCF class
+//! Class for vcf file
 /*!
   VCF file.
 */

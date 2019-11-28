@@ -4,3 +4,4 @@ main
 *.vcf
 *.debug
 *.o
+example
