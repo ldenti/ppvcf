@@ -2,11 +2,11 @@
 #define _PPVCF_HPP_
 
 #include <iostream>
+#include <map>
 #include <numeric>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <map>
 
 #include <omp.h>
 
@@ -93,20 +93,22 @@ private:
    * @param record is a htslib record
    **/
   void store_filter(bcf_hdr_t *header, bcf1_t *record) {
-    // TODO: store filter differently (not as a single string) if we want to allow filtering
+    // TODO: store filter differently (not as a single string) if we want to
+    // allow filtering
     filter = "";
     if (record->d.n_flt) {
       for (int i = 0; i < record->d.n_flt; ++i) {
-	if(i)
-	  filter+=";";
-	filter += header->id[BCF_DT_ID][record->d.flt[i]].key;
+        if (i)
+          filter += ";";
+        filter += header->id[BCF_DT_ID][record->d.flt[i]].key;
       }
     } else
       filter = ".";
   }
 
   /**
-   * Extract the additional information from record and store them as a map<string, string>.
+   * Extract the additional information from record and store them as a
+   *map<string, string>.
    *
    * @param header is the htslib header
    * @param record is a htslib record
@@ -116,51 +118,53 @@ private:
       bcf_info_t *info_field = &record->d.info[i];
       int key_idx = info_field->key;
       int type = info_field->type;
-      const char* key = header->id[BCF_DT_ID][key_idx].key;
+      const char *key = header->id[BCF_DT_ID][key_idx].key;
 
       int ndst = 0;
       string value = "";
       if (type == BCF_BT_NULL) {
-	bool v = bcf_get_info_flag(header, record, key, &v, &ndst);
-	value = to_string(v);
-	// FIXME: remember to manage booleans (eg when producing output)
-      } else if (type == BCF_BT_INT8 || type == BCF_BT_INT16 || type == BCF_BT_INT32) {
-	int *v = NULL;
-	bcf_get_info_int32(header, record, key, &v, &ndst);
-	value = to_string(*v);
-	free(v);
+        bool v = bcf_get_info_flag(header, record, key, &v, &ndst);
+        value = to_string(v);
+        // FIXME: remember to manage booleans (eg when producing output)
+      } else if (type == BCF_BT_INT8 || type == BCF_BT_INT16 ||
+                 type == BCF_BT_INT32) {
+        int *v = NULL;
+        bcf_get_info_int32(header, record, key, &v, &ndst);
+        value = to_string(*v);
+        free(v);
       } else if (type == BCF_BT_FLOAT) {
-	float *v = NULL;
-	bcf_get_info_float(header, record, key, &v, &ndst);
-	value = to_string(*v);
-	free(v);
+        float *v = NULL;
+        bcf_get_info_float(header, record, key, &v, &ndst);
+        value = to_string(*v);
+        free(v);
       } else if (type == BCF_BT_CHAR) {
-	char *v = NULL;
-	bcf_get_info_string(header, record, key, &v, &ndst);
-	value = string(v);
-	free(v);
+        char *v = NULL;
+        bcf_get_info_string(header, record, key, &v, &ndst);
+        value = string(v);
+        free(v);
       } else {
-	cerr << "Unknown type " << type << " (field " << key << ")" << endl;
-	exit(1);
+        cerr << "Unknown type " << type << " (field " << key << ")" << endl;
+        exit(1);
       }
 
       info[key] = value;
 
       /* // Maybe we can adapt this
-	 #define BRANCH(type_t, bcf_ht_t) {				\
-	 type_t *value = NULL;						\
-	 bcf_get_info_values(header, record, key, (void**)(&value), &ndst, bcf_ht_t); \
-	 cout << *value << endl;					\
-	 }
-	 switch(type) {
-	 case BCF_BT_INT8: BRANCH(int, BCF_HT_INT); break;
-	 case BCF_BT_INT16: BRANCH(int, BCF_HT_INT); break;
-	 case BCF_BT_INT32: BRANCH(int, BCF_HT_INT); break;
-	 case BCF_BT_FLOAT: BRANCH(float, BCF_HT_REAL); break;
-	 case BCF_BT_CHAR: BRANCH(string, BCF_HT_STR); break;
-	 default: cerr << "Unknown type " << type << endl; exit(1);
-	 }
-	 #undef BRANCH
+         #define BRANCH(type_t, bcf_ht_t) {				\
+         type_t *value = NULL;						\
+         bcf_get_info_values(header, record, key, (void**)(&value), &ndst,
+         bcf_ht_t); \
+         cout << *value << endl;					\
+         }
+         switch(type) {
+         case BCF_BT_INT8: BRANCH(int, BCF_HT_INT); break;
+         case BCF_BT_INT16: BRANCH(int, BCF_HT_INT); break;
+         case BCF_BT_INT32: BRANCH(int, BCF_HT_INT); break;
+         case BCF_BT_FLOAT: BRANCH(float, BCF_HT_REAL); break;
+         case BCF_BT_CHAR: BRANCH(string, BCF_HT_STR); break;
+         default: cerr << "Unknown type " << type << endl; exit(1);
+         }
+         #undef BRANCH
       */
     }
   }
@@ -172,7 +176,7 @@ public:
    * @param _nsamples is the number of samples
    **/
   Variant(const uint32_t _nsamples)
-    : nsamples(_nsamples), gti(0), genotypes(_nsamples) {}
+      : nsamples(_nsamples), gti(0), genotypes(_nsamples) {}
   /**
    * Destructor
    **/
@@ -193,11 +197,11 @@ public:
     for (int i = 1; i < record->n_allele; ++i) {
       char *curr_alt = record->d.allele[i];
       if (curr_alt[0] != '<')
-	alts.push_back(string(curr_alt));
+        alts.push_back(string(curr_alt));
     }
 
     quality = to_string(record->qual);
-    quality = quality=="nan" ? "." : quality;
+    quality = quality == "nan" ? "." : quality;
     store_filter(header, record);
     store_info(header, record);
   }
@@ -209,8 +213,7 @@ public:
    * @param a2 is the second allele
    * @param phased is true if the genotype is phased, false otherwise
    **/
-  void add_genotype(const uint8_t a1, const uint8_t a2,
-		    const bool phased) {
+  void add_genotype(const uint8_t a1, const uint8_t a2, const bool phased) {
     assert(gti < nsamples);
     genotypes[gti].a1 = a1;
     genotypes[gti].a2 = a2;
@@ -221,51 +224,37 @@ public:
   /**
    * @return the chromosome of the variant
    **/
-  string get_seqname() const {
-    return seq_name;
-  }
+  string get_seqname() const { return seq_name; }
 
   /**
    * @return the (0-based) position of the variant
    **/
-  int get_pos() const {
-    return pos-1;
-  }
+  int get_pos() const { return pos - 1; }
 
   /**
    * @return the variant identifier
    **/
-  string get_idx() const {
-    return idx;
-  }
+  string get_idx() const { return idx; }
 
   /**
    * @return the reference allele
    **/
-  string get_ref() const {
-    return ref;
-  }
+  string get_ref() const { return ref; }
 
   /**
    * @return the alternate alleles
    **/
-  vector<string> get_alts() const {
-    return alts;
-  }
+  vector<string> get_alts() const { return alts; }
 
   /**
    * @return the i-th (1-based) alternate allele
    **/
-  string get_alt(const int i) const {
-    return alts[i-1];
-  }
+  string get_alt(const int i) const { return alts[i - 1]; }
 
   /**
    * @return the variant quality
    **/
-  string get_quality() const {
-    return quality;
-  }
+  string get_quality() const { return quality; }
 
   /**
    * Extract the information value associated to a key.
@@ -273,9 +262,7 @@ public:
    * @param k is the key
    * @return the value associated to key k
    **/
-  string get_info(const string &k) const {
-    return info.at(k);
-  }
+  string get_info(const string &k) const { return info.at(k); }
 };
 
 /*---------- VCF class ----------*/
@@ -368,8 +355,8 @@ public:
       char *samples = get_samples(vcf->line.s, vcf->line.l + 1);
       size_t samples_s = vcf->line.l - (samples - vcf->line.s);
       while (samples_s > fmt_lines[i].size) {
-	fmt_lines[i].size *= 1.6;
-	fmt_lines[i].seq = (char *)realloc(fmt_lines[i].seq, fmt_lines[i].size);
+        fmt_lines[i].size *= 1.6;
+        fmt_lines[i].seq = (char *)realloc(fmt_lines[i].seq, fmt_lines[i].size);
       }
       strncpy(fmt_lines[i].seq, samples, samples_s);
       ++i;
@@ -385,9 +372,7 @@ public:
   /**
    * @return the variants read in the last iteration
    **/
-  vector<Variant> get_variants() const {
-    return variants;
-  }
+  vector<Variant> get_variants() const { return variants; }
 
 private:
   /**
@@ -411,8 +396,8 @@ private:
      * sub-fields."
      */
     for (; gt_start != gt_end && (*gt_start != 'G' || *(gt_start + 1) != 'T' ||
-				  *(gt_start + 2) != '\t');
-	 ++gt_start)
+                                  *(gt_start + 2) != '\t');
+         ++gt_start)
       ;
     return gt_start;
   }
@@ -421,7 +406,8 @@ private:
    * Extracts information from a cstring representing a genotype
    *
    * @param start is a cstring
-   * @return a tuple containing the first allele, the second allele, and the phased flag
+   * @return a tuple containing the first allele, the second allele, and the
+   *phased flag
    **/
   tuple<uint8_t, uint8_t, bool> extract_genotype(char *start) {
     if (*start == '.')
@@ -464,7 +450,7 @@ private:
     tuple<uint8_t, uint8_t, bool> gt;
     while (!last) {
       for (; *end != '\t' && *end != '\0'; ++end)
-	;
+        ;
       last = *end == '\0';
       *end = '\0';
       gt = extract_genotype(start);
@@ -486,7 +472,6 @@ private:
       fill_variant(i);
     }
   }
-
 };
 
 #endif
