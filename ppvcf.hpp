@@ -229,7 +229,7 @@ public:
   /**
    * @return the (0-based) position of the variant
    **/
-  int get_pos() const { return pos - 1; }
+  int get_pos() const { return pos; }
 
   /**
    * @return the variant identifier
