@@ -12,8 +12,6 @@
 
 #include "htslib/vcf.h"
 
-using namespace std;
-
 /*---------- Auxiliary structs ----------*/
 //!  Auxiliary struct
 /*!
@@ -63,28 +61,28 @@ struct GT {
 class Variant {
 private:
   /// Chromosome
-  string seq_name;
+  std::string seq_name;
   /// Position (0-based)
   int pos;
   /// Identifier
-  string idx;
+  std::string idx;
   /// Reference base(s)
-  string ref;
+  std::string ref;
   /// Alternate base(s)
-  vector<string> alts;
+  std::vector<std::string> alts;
   /// Phred-scaled quality score
-  string quality;
+  std::string quality;
   /// Filter status
-  string filter;
+  std::string filter;
   /// Additional information
-  map<string, string> info;
+  std::map<std::string, std::string> info;
 
   /// Total number of samples
   uint32_t nsamples;
   /// Genotype counter represeting how many GTs have been stored
   uint32_t gti;
   /// Genotype fields
-  vector<GT> genotypes;
+  std::vector<GT> genotypes;
 
   /**
    * Extract the filter field from record and store it as a string.
@@ -121,26 +119,26 @@ private:
       const char *key = header->id[BCF_DT_ID][key_idx].key;
 
       int ndst = 0;
-      string value = "";
+      std::string value = "";
       if (type == BCF_BT_NULL) {
         bool v = bcf_get_info_flag(header, record, key, &v, &ndst);
-        value = to_string(v);
+        value = std::to_string(v);
         // FIXME: remember to manage booleans (eg when producing output)
       } else if (type == BCF_BT_INT8 || type == BCF_BT_INT16 ||
                  type == BCF_BT_INT32) {
         int *v = NULL;
         bcf_get_info_int32(header, record, key, &v, &ndst);
-        value = to_string(*v);
+        value = std::to_string(*v);
         free(v);
       } else if (type == BCF_BT_FLOAT) {
         float *v = NULL;
         bcf_get_info_float(header, record, key, &v, &ndst);
-        value = to_string(*v);
+        value = std::to_string(*v);
         free(v);
       } else if (type == BCF_BT_CHAR) {
         char *v = NULL;
         bcf_get_info_string(header, record, key, &v, &ndst);
-        value = string(v);
+        value = std::string(v);
         free(v);
       } else {
         cerr << "Unknown type " << type << " (field " << key << ")" << endl;
@@ -161,7 +159,7 @@ private:
          case BCF_BT_INT16: BRANCH(int, BCF_HT_INT); break;
          case BCF_BT_INT32: BRANCH(int, BCF_HT_INT); break;
          case BCF_BT_FLOAT: BRANCH(float, BCF_HT_REAL); break;
-         case BCF_BT_CHAR: BRANCH(string, BCF_HT_STR); break;
+         case BCF_BT_CHAR: BRANCH(std::string, BCF_HT_STR); break;
          default: cerr << "Unknown type " << type << endl; exit(1);
          }
          #undef BRANCH
@@ -197,10 +195,10 @@ public:
     for (int i = 1; i < record->n_allele; ++i) {
       char *curr_alt = record->d.allele[i];
       if (curr_alt[0] != '<')
-        alts.push_back(string(curr_alt));
+        alts.push_back(std::string(curr_alt));
     }
 
-    quality = to_string(record->qual);
+    quality = std::to_string(record->qual);
     quality = quality == "nan" ? "." : quality;
     store_filter(header, record);
     store_info(header, record);
@@ -224,7 +222,7 @@ public:
   /**
    * @return the chromosome of the variant
    **/
-  string get_seqname() const { return seq_name; }
+  std::string get_seqname() const { return seq_name; }
 
   /**
    * @return the (0-based) position of the variant
@@ -234,27 +232,27 @@ public:
   /**
    * @return the variant identifier
    **/
-  string get_idx() const { return idx; }
+  std::string get_idx() const { return idx; }
 
   /**
    * @return the reference allele
    **/
-  string get_ref() const { return ref; }
+  std::string get_ref() const { return ref; }
 
   /**
    * @return the alternate alleles
    **/
-  vector<string> get_alts() const { return alts; }
+  std::vector<std::string> get_alts() const { return alts; }
 
   /**
    * @return the i-th (1-based) alternate allele
    **/
-  string get_alt(const int i) const { return alts[i - 1]; }
+  std::string get_alt(const int i) const { return alts[i - 1]; }
 
   /**
    * @return the variant quality
    **/
-  string get_quality() const { return quality; }
+  std::string get_quality() const { return quality; }
 
   /**
    * Extract the information value associated to a key.
@@ -262,7 +260,7 @@ public:
    * @param k is the key
    * @return the value associated to key k
    **/
-  string get_info(const string &k) const { return info.at(k); }
+  std::string get_info(const std::string &k) const { return info.at(k); }
 };
 
 /*---------- VCF class ----------*/
@@ -282,9 +280,9 @@ private:
   /// Total number of samples per variant
   int n_samples;
   /// Variants read
-  vector<Variant> variants;
+  std::vector<Variant> variants;
   /// Genotype fields as cstring (from "GT" to the end of each line)
-  vector<str_w_l> fmt_lines;
+  std::vector<str_w_l> fmt_lines;
   /// Number of variants to read at each iteration
   size_t block_size;
   /// Number of variants read in the last iteration
@@ -374,7 +372,7 @@ public:
   /**
    * @return the variants read in the last iteration
    **/
-  vector<Variant> get_variants() const { return variants; }
+  std::vector<Variant> get_variants() const { return variants; }
 
 private:
   /**
@@ -448,7 +446,6 @@ private:
     for (; *samples != '\t'; ++samples)
       ;
     ++samples;
-
     char *start = samples;
     char *end = start;
     bool last = *end == '\0';
