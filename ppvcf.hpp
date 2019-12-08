@@ -353,12 +353,14 @@ public:
 
       // 2. we store the format line
       char *samples = get_samples(vcf->line.s, vcf->line.l + 1);
-      size_t samples_s = vcf->line.l - (samples - vcf->line.s);
-      while (samples_s > fmt_lines[i].size) {
+      size_t samples_size = vcf->line.l - (samples - vcf->line.s);
+      while (samples_size > fmt_lines[i].size) {
+	cerr << "Reallocating memory for variant " << variants.back().get_idx() << endl;
         fmt_lines[i].size *= 1.6;
         fmt_lines[i].seq = (char *)realloc(fmt_lines[i].seq, fmt_lines[i].size);
       }
-      strncpy(fmt_lines[i].seq, samples, samples_s);
+      strncpy(fmt_lines[i].seq, samples, samples_size);
+      fmt_lines[i].seq[samples_size] = '\0';
       ++i;
     }
     to_parse = i;
