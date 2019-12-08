@@ -397,10 +397,13 @@ private:
      * be the genotype (GT) if it is present. There are no required
      * sub-fields."
      */
-    for (; gt_start != gt_end && (*gt_start != 'G' || *(gt_start + 1) != 'T' ||
-                                  *(gt_start + 2) != '\t');
-         ++gt_start)
+    // FIXME: manage :
+    for (; gt_start != gt_end && !(*gt_start == '\0' && *(gt_start+1) == 'G' && *(gt_start+2) == 'T' && *(gt_start+3) == '\t');
+	 ++gt_start)
       ;
+    ++gt_start; // strip the first \0 left by the for
+
+    // FIXME: manage no GT (ie gt_start == gt_end)
     return gt_start;
   }
 
