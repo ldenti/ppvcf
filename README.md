@@ -1,9 +1,8 @@
 # ppvcf
-`ppvcf` is a fast c++ library for the parallel parsing of huge vcf files. `ppvcf` is a C++ wrapper for `htslib`: it builds upon `htslib` providing a way to parse in parallel big vcf files containing a huge quantity of samples.
+`ppvcf` is a fast C++ library for the parallel parsing of huge vcf files. It provides a way to parse in parallel big VCF files containing a huge quantity of samples.
 
 ### Installation
 `ppvcf` comes as a single `.hpp` header that you can easily include in your source. It depends on:
-* [htslib](https://www.htslib.org/)
 * [openmp](https://www.openmp.org/)
 
 
@@ -33,27 +32,11 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 ```
-If you have `htslib` installed in your system, to compile the example program, you just have to link against it with the `-lhts` flag:
+To compile the example program:
 ```bash
-g++ -Wall -O3 -std=c++11 example.cpp -o example -lhts -fopenmp
+g++ -Wall -O3 -std=c++11 example.cpp -o example -fopenmp
 ```
-Otherwise, if you have installed `htslib` locally, you can compile the example program with:
-```bash
-g++ -Wall -O3 -std=c++11 -I./htslib example.cpp -o example -L./htslib -lhts -fopenmp
-```
-Then you can run the example code with:
+To run the example code with 2 threads:
 ```
 ./example tiny.vcf 2
-```
-
-### Experiments
-To run the experiments:
-```
-git clone --recursive https://github.com/ldenti/ppvcf.git
-cd ppvcf/htslib
-make
-cd ..
-make
-export LD_LIBRARY_PATH=./htslib
-./main small.vcf.gz 2 0
 ```
